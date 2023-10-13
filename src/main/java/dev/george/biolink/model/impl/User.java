@@ -3,21 +3,19 @@ package dev.george.biolink.model.impl;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import dev.george.biolink.model.Model;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.IOException;
-import java.util.List;
 
+@Entity
 @Getter @Setter
 public class User extends Model<User> {
 
-    private int id;
-
-    private List<Model<?>> pageComponents;
-
-    private List<String> links;
-    private List<String> domains;
+    @Id
+    private long id;
 
     private String username;
     private String email;
