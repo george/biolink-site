@@ -2,6 +2,7 @@ package dev.george.biolink.model.impl.component;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import dev.george.biolink.model.JsonModel;
 import dev.george.biolink.model.Model;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Getter @Setter
-public class BackgroundComponent<T> extends Model<T> {
+public class BackgroundComponent<T> extends JsonModel<T> {
 
     private String imageUrl;
     private String backgroundColor;
