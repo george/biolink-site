@@ -17,12 +17,8 @@ public class GsonConfiguration {
         ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false);
         provider.addIncludeFilter(new AssignableTypeFilter(Model.class));
 
-        System.out.println(Model.class.getPackage().toString());
-
         provider.findCandidateComponents(Model.class.getPackage().toString())
                         .forEach(typeAdapterModel -> {
-                            System.out.println(typeAdapterModel.toString());
-
                             builder.registerTypeAdapter(typeAdapterModel.getClass(), typeAdapterModel);
                         });
 

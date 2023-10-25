@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS profile_components
 CREATE TABLE IF NOT EXISTS ranks
 (
     rank_id                   SERIAL PRIMARY KEY,
-    rank_name                 VARCHAR(50),
+    rank_name                 VARCHAR(50) UNIQUE,
     rank_style                VARCHAR(255),
-    rank_priority             INT,
+    rank_priority             INT UNIQUE,
     rank_purchasable          BOOLEAN,
     rank_can_manage_lower     BOOLEAN,
     rank_staff                BOOLEAN,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS redirects
 CREATE TABLE IF NOT EXISTS domains
 (
     user_id INT,
-    domain  VARCHAR(100),
+    domain  VARCHAR(100) UNIQUE,
     PRIMARY KEY (user_id, domain)
 );
 
@@ -67,15 +67,15 @@ CREATE TABLE IF NOT EXISTS invites
 
 CREATE TABLE IF NOT EXISTS platforms
 (
-    platform_id           SERIAL PRIMARY KEY,
-    platform_key          VARCHAR(50),
-    platform_display_name VARCHAR(50),
-    PRIMARY KEY (platform_id, platform_key)
+    platform_id           SERIAL,
+    platform_key          VARCHAR(50) UNIQUE,
+    platform_display_name VARCHAR(50) UNIQUE,
+    PRIMARY KEY (platform_id)
 );
 
 CREATE TABLE IF NOT EXISTS user_socials
 (
-    user_id     INT,
+    user_id     SERIAL,
     platform_id INT,
     username    VARCHAR(100),
     PRIMARY KEY (user_id, platform_id, username),
