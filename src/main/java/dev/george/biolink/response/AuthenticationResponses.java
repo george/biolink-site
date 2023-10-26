@@ -60,6 +60,36 @@ public class AuthenticationResponses {
 
         object.addProperty("success", true);
 
+        return transformProfileAndDataToResponse(object, profile);
+    }
+
+    public ResponseEntity<String> getIllegalEmail() {
+        JsonObject object = new JsonObject();
+
+        object.addProperty("error", true);
+        object.addProperty("error_code", "invalid_email");
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
+    }
+
+    public ResponseEntity<String> getKeyInUse(String key) {
+        JsonObject object = new JsonObject();
+
+        object.addProperty("error", true);
+        object.addProperty("error_code", key + "_in_use");
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
+    }
+
+    public ResponseEntity<String> getProfileCreationCompleted(Profile profile) {
+        JsonObject object = new JsonObject();
+
+        object.addProperty("success", true);
+
+        return transformProfileAndDataToResponse(object, profile);
+    }
+
+    public ResponseEntity<String> transformProfileAndDataToResponse(JsonObject object, Profile profile) {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         Map<String, Object> claims = new HashMap<>();
 
@@ -69,6 +99,6 @@ public class AuthenticationResponses {
         headers.add("Set-Cookie", String.format("session=%s; SameSite=Strict; Path=/; Domain=%s; Secure", jwtService.generateToken(claims,
                 Integer.toString((int) profile.getId())), cookieDomain));
 
-        return new ResponseEntity<>(gson.toJson(object), headers, HttpStatusCode.valueOf(200));
+        return new ResponseEntity<>(gson.toJson(object), headers, HttpStatusCode.valueOf(400));
     }
 }

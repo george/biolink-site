@@ -4,6 +4,8 @@ import dev.george.biolink.repository.ProfileRepository;
 import dev.george.biolink.model.Profile;
 import dev.george.biolink.response.AuthenticationResponses;
 import dev.george.biolink.schema.LoginSchema;
+import dev.george.biolink.schema.RegisterSchema;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -24,20 +28,11 @@ public class AuthenticationController {
     private final ProfileRepository repository;
 
     @PostMapping(
-            value = "/test",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<String> test(@RequestBody LoginSchema schema) {
-        return new ResponseEntity<>("", HttpStatusCode.valueOf(200));
-    }
-
-    @PostMapping(
             value = "/auth/login",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<String> getData(@RequestBody LoginSchema schema) {
+    public ResponseEntity<String> getData(@RequestBody LoginSchema schema, HttpServletRequest request) {
         if (schema.getPassword() == null || schema.getPassword().length() < 8 || schema.getPassword().length() > 128) {
             return responses.getPasswordLengthResponse();
         }
@@ -54,10 +49,56 @@ public class AuthenticationController {
 
         Profile profile = optional.get();
 
-//        if (!encoder.matches(schema.getPassword(), profile.getPassword())) {
-//            return responses.getInvalidEmailOrPassword();
-//        }
+        if (!encoder.matches(schema.getPassword(), profile.getPassword())) {
+            return responses.getInvalidEmailOrPassword();
+        }
+
+        profile.setLastLogin(Timestamp.from(Instant.now()));
+        profile.setLastIp(request.getRemoteAddr());
+
+        repository.saveAndFlush(profile);
 
         return responses.completeAuthentication(profile);
+    }
+
+    @PostMapping(
+            value = "/auth/register",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<String> getData(@RequestBody RegisterSchema schema, HttpServletRequest request) {
+        if (schema.getCaptchaResponseKey() == null || schema.getCaptchaResponseKey().length() < 8) {
+            return responses.getReCaptchaResponseFailed();
+        }
+
+        if (schema.getPassword() == null || schema.getPassword().length() < 8 || schema.getPassword().length() > 128) {
+            return responses.getPasswordLengthResponse();
+        }
+
+        if (schema.getEmail() == null || !schema.getEmail().contains(".") || !schema.getEmail().contains("@")
+                || schema.getEmail().split("@").length != 2 || !schema.getEmail().split("@")[1].contains(".")) {
+            return responses.getIllegalEmail();
+        }
+
+        if (repository.findOneByUsername(schema.getUsername()).isPresent()) {
+            return responses.getKeyInUse("username");
+        }
+
+        if (repository.findOneByEmail(schema.getEmail()).isPresent()) {
+            return responses.getKeyInUse("email");
+        }
+
+        Profile profile = new Profile();
+
+        profile.setEmail(schema.getEmail());
+        profile.setUsername(schema.getUsername());
+        profile.setPassword(encoder.encode(profile.getPassword()));
+        profile.setCreatedAt(Timestamp.from(Instant.now()));
+        profile.setLastLogin(Timestamp.from(Instant.now()));
+        profile.setLastIp(request.getRemoteAddr());
+
+        repository.saveAndFlush(profile);
+
+        return responses.getProfileCreationCompleted(profile);
     }
 }

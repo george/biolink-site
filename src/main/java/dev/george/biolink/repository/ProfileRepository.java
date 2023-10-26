@@ -13,4 +13,6 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
 
     Optional<Profile> findOneByEmail(String email);
 
+    Optional<Profile> findOneByUsername(String username);
+
 }

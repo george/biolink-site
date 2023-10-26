@@ -34,4 +34,15 @@ public class Profile {
                 (lastIp >> 16 & 0xff),
                 (lastIp >> 24 & 0xff));
     }
+
+    public void setLastIp(String ip) {
+        String[] parts = ip.split("\\.");
+
+        int ipNumbers = 0;
+        for (int i = 0; i < 4; i++) {
+            ipNumbers += Integer.parseInt(parts[i]) << (24 - (8 * i));
+        }
+
+        this.lastIp = ipNumbers;
+    }
 }
