@@ -1,47 +1,63 @@
 package dev.george.biolink.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import org.springframework.beans.factory.annotation.Autowired;
+import dev.george.biolink.repository.ProfileRepository;
+import dev.george.biolink.model.Profile;
+import dev.george.biolink.response.AuthenticationResponses;
+import dev.george.biolink.schema.LoginSchema;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
+@AllArgsConstructor
 @RestController
 public class AuthenticationController {
 
-    @Autowired
-    private Gson gson;
+    private final AuthenticationResponses responses;
+    private final PasswordEncoder encoder;
+    private final ProfileRepository repository;
 
-    @PostMapping(value = "/login", produces = "application/json")
-    public ResponseEntity<String> getData(
-            @RequestParam(value = "identifier") String identifier,
-            @RequestParam(value = "password") String password,
-            @RequestParam(value = "g-recaptcha-response-key") String responseKey,
-            @Nullable @RequestParam(value = "authentication-purpose") String authenticationPurpose) {
-        String query = identifier.contains("@") ? "email" : "username";
-
-        if (password.length() < 8) {
-            JsonObject object = new JsonObject();
-
-            object.addProperty("error", true);
-            object.addProperty("error_code", "password_length");
-
-            return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
-        }
-
-        return null;
+    @PostMapping(
+            value = "/test",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<String> test(@RequestBody LoginSchema schema) {
+        return new ResponseEntity<>("", HttpStatusCode.valueOf(200));
     }
 
-    private ResponseEntity<String> failForInvalidIdentifierOrPassword() {
-        JsonObject object = new JsonObject();
+    @PostMapping(
+            value = "/auth/login",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<String> getData(@RequestBody LoginSchema schema) {
+        if (schema.getPassword() == null || schema.getPassword().length() < 8 || schema.getPassword().length() > 128) {
+            return responses.getPasswordLengthResponse();
+        }
 
-        object.addProperty("error", true);
-        object.addProperty("invalid_identifier_or_password", true);
+        if (schema.getCaptchaResponseKey() == null || schema.getCaptchaResponseKey().length() < 8) {
+            return responses.getReCaptchaResponseFailed();
+        }
 
-        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
+        Optional<Profile> optional = repository.findOneByEmail(schema.getEmail());
+
+        if (optional.isEmpty()) {
+            return responses.getInvalidEmailOrPassword();
+        }
+
+        Profile profile = optional.get();
+
+//        if (!encoder.matches(schema.getPassword(), profile.getPassword())) {
+//            return responses.getInvalidEmailOrPassword();
+//        }
+
+        return responses.completeAuthentication(profile);
     }
 }

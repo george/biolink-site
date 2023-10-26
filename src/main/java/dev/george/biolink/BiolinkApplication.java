@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 @SpringBootApplication
-@EntityScan("dev.george.biolink.model.impl")
+@EntityScan("dev.george.biolink.model")
 public class BiolinkApplication {
 
     public static void main(String[] args) {
