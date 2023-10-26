@@ -92,7 +92,7 @@ public class AuthenticationController {
 
         profile.setEmail(schema.getEmail());
         profile.setUsername(schema.getUsername());
-        profile.setPassword(encoder.encode(profile.getPassword()));
+        profile.setPassword(encoder.encode(schema.getPassword()));
         profile.setCreatedAt(Timestamp.from(Instant.now()));
         profile.setLastLogin(Timestamp.from(Instant.now()));
         profile.setLastIp(request.getRemoteAddr());

@@ -97,7 +97,7 @@ public class AuthenticationResponses {
         claims.put("ip", profile.getLastIpString());
 
         headers.add("Set-Cookie", String.format("session=%s; SameSite=Strict; Path=/; Domain=%s; Secure", jwtService.generateToken(claims,
-                Integer.toString((int) profile.getId())), cookieDomain));
+                Integer.toString(profile.getId())), cookieDomain));
 
         return new ResponseEntity<>(gson.toJson(object), headers, HttpStatusCode.valueOf(400));
     }

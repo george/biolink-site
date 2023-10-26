@@ -47,7 +47,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 } catch (ProfileNotFoundException exc) {
-                    exc.printStackTrace();
                 }
             }
         }

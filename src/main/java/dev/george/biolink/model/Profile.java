@@ -1,8 +1,6 @@
 package dev.george.biolink.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +12,8 @@ import java.sql.Timestamp;
 @Getter @Setter
 public class Profile {
 
-    @Id @NotNull private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id private Integer id;
 
     @NotNull private String username;
     @NotNull private String password;
