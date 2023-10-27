@@ -1,7 +1,8 @@
 package dev.george.biolink.component;
 
 import dev.george.biolink.exception.ProfileNotFoundException;
-import dev.george.biolink.model.Profile;
+import dev.george.biolink.model.Ban;
+import dev.george.biolink.repository.BansRepository;
 import dev.george.biolink.service.JwtService;
 import dev.george.biolink.service.UserProfileDetailsService;
 import jakarta.servlet.FilterChain;
@@ -18,11 +19,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
+import java.util.List;
 
 @AllArgsConstructor
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private final BansRepository bansRepository;
     private final JwtService jwtService;
     private final UserProfileDetailsService profileDetailsService;
 
@@ -42,10 +45,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     UserDetails details = profileDetailsService.loadUserById(userId);
 
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
+                    if (bansRepository.findBansByUserId(userId).stream().noneMatch(Ban::isBanActive)) {
+                        UsernamePasswordAuthenticationToken authenticationToken =
+                                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
 
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    }
                 } catch (ProfileNotFoundException exc) {
                 }
             }

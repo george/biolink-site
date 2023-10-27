@@ -56,26 +56,4 @@ public class SecurityConfig {
                     authorize.requestMatchers("/**").hasAuthority("user");
                 }).addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class).build();
     }
-
-    private String getDomain(String origin) {
-        if (origin == null || origin.split("://").length == 0) {
-            return origin;
-        }
-
-        String path = origin.split("://")[1];
-
-        if (path.contains("/")) {
-            path = path.split("/")[0];
-        }
-
-        if (path.contains(":")) {
-            path = path.split(":")[0];
-        }
-
-        if (path.contains("localhost")) {
-            path = path.replace("localhost", "127.0.0.1");
-        }
-
-        return path;
-    }
 }
