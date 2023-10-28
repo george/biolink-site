@@ -44,17 +44,17 @@ CREATE INDEX IF NOT EXISTS profile_component_user_id ON profile_component(user_i
 
 CREATE TABLE IF NOT EXISTS rank
 (
-    rank_id                   SERIAL PRIMARY KEY,
-    rank_name                 VARCHAR(50) UNIQUE,
-    rank_style                VARCHAR(255),
-    rank_priority             INT UNIQUE,
-    rank_purchasable          BOOLEAN,
-    rank_can_manage_lower     BOOLEAN,
-    rank_staff                BOOLEAN,
-    rank_can_ban              BOOLEAN,
-    rank_can_manage_users     BOOLEAN,
-    rank_can_give_ranks       BOOLEAN,
-    rank_can_give_staff_ranks BOOLEAN
+    id                   SERIAL PRIMARY KEY,
+    name                 VARCHAR(50) UNIQUE,
+    style                VARCHAR(255),
+    priority             INT UNIQUE,
+    purchasable          BOOLEAN,
+    can_manage_lower     BOOLEAN,
+    staff                BOOLEAN,
+    can_ban              BOOLEAN,
+    can_manage_users     BOOLEAN,
+    can_give_ranks       BOOLEAN,
+    can_give_staff_ranks BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS user_group
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS user_group
     group_id INT,
     PRIMARY KEY (user_id, group_id),
     FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES rank (rank_id) ON DELETE CASCADE
+    FOREIGN KEY (group_id) REFERENCES rank (id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS user_group_from_id ON user_group(user_id);

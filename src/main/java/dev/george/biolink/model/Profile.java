@@ -32,10 +32,11 @@ public class Profile {
 
     public String getLastIpString() {
         return String.format("%d.%d.%d.%d",
-                (lastIp & 0xff),
-                (lastIp >> 8 & 0xff),
+                (lastIp >> 24 & 0xff),
                 (lastIp >> 16 & 0xff),
-                (lastIp >> 24 & 0xff));
+                (lastIp >> 8 & 0xff),
+                (lastIp & 0xff)
+                );
     }
 
     public void setLastIp(String ip) {
