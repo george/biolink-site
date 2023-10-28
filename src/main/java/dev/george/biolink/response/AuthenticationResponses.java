@@ -2,7 +2,9 @@ package dev.george.biolink.response;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import dev.george.biolink.model.Context;
 import dev.george.biolink.model.Profile;
+import dev.george.biolink.repository.ContextRepository;
 import dev.george.biolink.service.JwtService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
@@ -11,21 +13,24 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class AuthenticationResponses {
 
+    private final ContextRepository contextRepository;
     private final Gson gson;
     private final JwtService jwtService;
 
     @Value("${biolink.cookie.domain}")
     private String cookieDomain;
 
-    public AuthenticationResponses(Gson gson, JwtService jwtService) {
+    public AuthenticationResponses(ContextRepository contextRepository, Gson gson, JwtService jwtService) {
         this.gson = gson;
         this.jwtService = jwtService;
+        this.contextRepository = contextRepository;
     }
 
     public ResponseEntity<String> getInvalidEmailOrPassword() {
@@ -61,6 +66,43 @@ public class AuthenticationResponses {
         object.addProperty("success", true);
 
         return transformProfileAndDataToResponse(object, profile);
+    }
+
+    public ResponseEntity<String> additionalMfaRequired(Profile profile, String ipAddress, String requiredMfaType) {
+        JsonObject object = new JsonObject();
+        Context context = new Context();
+
+        String meta = "auth-" + ipAddress + "-" + requiredMfaType;
+
+        context.setUserId(profile.getId());
+        context.setContextMeta(meta);
+
+        contextRepository.save(context);
+
+        object.addProperty("error", true);
+        object.addProperty("error_code", "additional_mfa_required");
+        object.addProperty("required_mfa_type", requiredMfaType);
+        object.addProperty("context_id", new String(Base64.getEncoder().encode(meta.getBytes())));
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(401));
+    }
+
+    public ResponseEntity<String> invalidContextId() {
+        JsonObject object = new JsonObject();
+
+        object.addProperty("error", true);
+        object.addProperty("error_code", "invalid_context_id");
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
+    }
+
+    public ResponseEntity<String> expiredContextId() {
+        JsonObject object = new JsonObject();
+
+        object.addProperty("error", true);
+        object.addProperty("error_code", "expired_context_id");
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(406));
     }
 
     public ResponseEntity<String> getIllegalEmail() {
@@ -99,6 +141,6 @@ public class AuthenticationResponses {
         headers.add("Set-Cookie", String.format("session=%s; SameSite=Strict; Path=/; Domain=%s; Secure", jwtService.generateToken(claims,
                 Integer.toString(profile.getId())), cookieDomain));
 
-        return new ResponseEntity<>(gson.toJson(object), headers, HttpStatusCode.valueOf(400));
+        return new ResponseEntity<>(gson.toJson(object), headers, HttpStatusCode.valueOf(200));
     }
 }

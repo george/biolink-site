@@ -12,8 +12,8 @@ import java.util.List;
 @Repository
 public interface LogsRepository extends JpaRepository<Log, Integer> {
 
-    <S extends Log> List<S> findAllByTargetUser(int userId, Example<S> example);
+    <S extends Log> List<S> findAlByTargetUser(int userId);
 
-    <S extends Log> List<S> findAllByStaffId(int staffId, Example<S> example);
+    <S extends Log> List<S> findAllByStaffId(int staffId);
 
 }

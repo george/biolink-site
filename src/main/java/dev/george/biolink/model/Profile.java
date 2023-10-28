@@ -20,9 +20,13 @@ public class Profile {
     @NotNull private String email;
 
     @NotNull private Integer lastIp;
+    @NotNull private String ipSalt;
 
     @NotNull private Timestamp createdAt;
     @NotNull private Timestamp lastLogin;
+
+    private Boolean mfaEnabled;
+    private String mfaSecret;
 
     private Integer invitedBy;
 

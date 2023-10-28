@@ -1,4 +1,4 @@
-package dev.george.biolink.schema;
+package dev.george.biolink.schema.auth;
 
 import lombok.Getter;
 import lombok.Setter;

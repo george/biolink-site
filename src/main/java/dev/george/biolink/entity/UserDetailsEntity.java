@@ -1,7 +1,7 @@
 package dev.george.biolink.entity;
 
 import dev.george.biolink.model.Profile;
-import lombok.AllArgsConstructor;
+import dev.george.biolink.model.Rank;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,13 +19,20 @@ public class UserDetailsEntity implements UserDetails {
 
     private final List<GrantedAuthority> authorities = new ArrayList<>();
 
-    public UserDetailsEntity(Profile profile) {
+    private final List<Rank> groups;
+
+    public UserDetailsEntity(Profile profile, List<Rank> groups) {
         this.profile = profile;
 
         this.username = profile.getUsername();
         this.password = profile.getPassword();
 
-        this.authorities.add(new GrantedAuthorityImpl("user"));
+        this.groups = groups;
+
+        groups.stream()
+                .flatMap(rank -> rank.getGrantedAuthorities().stream())
+                .distinct()
+                .forEach(this.authorities::add);
     }
 
     @Override

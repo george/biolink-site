@@ -2,6 +2,7 @@ package dev.george.biolink.repository;
 
 import dev.george.biolink.model.Rank;
 import jakarta.persistence.Table;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +12,11 @@ import java.util.List;
 @Repository
 public interface RankRepository extends JpaRepository<Rank, Integer> {
 
+    @Cacheable("ranksByRankId")
+    Rank findById(int id);
+
     List<Rank> findAll();
+
+    List<Rank> findAllByIdIn(List<Integer> list);
 
 }

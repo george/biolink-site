@@ -1,15 +1,21 @@
 package dev.george.biolink.controller;
 
+import dev.george.biolink.entity.ProfileIpId;
+import dev.george.biolink.model.Context;
+import dev.george.biolink.model.ProfileIp;
+import dev.george.biolink.repository.ContextRepository;
+import dev.george.biolink.repository.ProfileIpsRepository;
 import dev.george.biolink.repository.ProfileRepository;
 import dev.george.biolink.model.Profile;
 import dev.george.biolink.response.AuthenticationResponses;
-import dev.george.biolink.schema.LoginSchema;
-import dev.george.biolink.schema.RegisterSchema;
+import dev.george.biolink.schema.auth.LoginSchema;
+import dev.george.biolink.schema.auth.RegisterSchema;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -24,8 +31,10 @@ import java.util.Optional;
 public class AuthenticationController {
 
     private final AuthenticationResponses responses;
+    private final ContextRepository contextRepository;
     private final PasswordEncoder encoder;
-    private final ProfileRepository repository;
+    private final ProfileRepository profileRepository;
+    private final ProfileIpsRepository profileIpsRepository;
 
     @PostMapping(
             value = "/auth/login",
@@ -33,30 +42,79 @@ public class AuthenticationController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<String> getData(@RequestBody LoginSchema schema, HttpServletRequest request) {
-        if (schema.getPassword() == null || schema.getPassword().length() < 8 || schema.getPassword().length() > 128) {
-            return responses.getPasswordLengthResponse();
+        if (schema.getContextId() == null) {
+            if (schema.getPassword() == null || schema.getPassword().length() < 8 || schema.getPassword().length() > 128) {
+                return responses.getPasswordLengthResponse();
+            }
+
+            if (schema.getCaptchaResponseKey() == null || schema.getCaptchaResponseKey().length() < 8) {
+                return responses.getReCaptchaResponseFailed();
+            }
+
+            Optional<Profile> optional = profileRepository.findOneByEmail(schema.getEmail());
+
+            if (optional.isEmpty()) {
+                return responses.getInvalidEmailOrPassword();
+            }
+
+            Profile profile = optional.get();
+
+            if (!encoder.matches(schema.getPassword(), profile.getPassword())) {
+                return responses.getInvalidEmailOrPassword();
+            }
+
+            boolean requiresMfa = profile.getMfaEnabled() != null && profile.getMfaEnabled();
+
+            if (schema.getContextId() != null && !requiresMfa) {
+                String hashedCurrentIp = BCrypt.hashpw(request.getRemoteAddr(), profile.getIpSalt());
+
+                if (profileIpsRepository.findAllByProfileIpIdProfileId(profile.getId()).stream()
+                        .noneMatch((profileIp) -> profileIp.getProfileIpId().getIpAddress().equals(hashedCurrentIp))) {
+                    requiresMfa = true;
+                }
+            }
+
+            if (!requiresMfa) {
+                profile.setLastLogin(Timestamp.from(Instant.now()));
+                profile.setLastIp(request.getRemoteAddr());
+
+                profileRepository.saveAndFlush(profile);
+
+                return responses.completeAuthentication(profile);
+            }
+
+            String authenticationMethod = profile.getMfaSecret() != null ? "totp" : "email";
+
+            return responses.additionalMfaRequired(profile, request.getRemoteAddr(), authenticationMethod);
         }
 
-        if (schema.getCaptchaResponseKey() == null || schema.getCaptchaResponseKey().length() < 8) {
-            return responses.getReCaptchaResponseFailed();
+        String contextMeta = new String(Base64.getDecoder().decode(schema.getContextId()));
+
+        if (!contextMeta.startsWith("auth-") || !contextMeta.contains("-") || contextMeta.split("-").length != 3) {
+            return responses.invalidContextId();
         }
 
-        Optional<Profile> optional = repository.findOneByEmail(schema.getEmail());
+        Optional<Context> optionalContext = contextRepository.findContextByContextMeta(contextMeta);
 
-        if (optional.isEmpty()) {
-            return responses.getInvalidEmailOrPassword();
+        if (optionalContext.isEmpty()) {
+            return responses.expiredContextId();
         }
 
-        Profile profile = optional.get();
+        Context context = optionalContext.get();
+        Optional<Profile> optionalProfile = profileRepository.findById(context.getUserId());
 
-        if (!encoder.matches(schema.getPassword(), profile.getPassword())) {
-            return responses.getInvalidEmailOrPassword();
+        if (optionalProfile.isEmpty()) {
+            return responses.invalidContextId();
         }
 
-        profile.setLastLogin(Timestamp.from(Instant.now()));
-        profile.setLastIp(request.getRemoteAddr());
+        Profile profile = optionalProfile.get();
+        String authenticationType = context.getContextMeta().split("-")[2];
 
-        repository.saveAndFlush(profile);
+        switch (authenticationType) {
+            case "email":
+            case "totp": {
+            }
+        }
 
         return responses.completeAuthentication(profile);
     }
@@ -80,11 +138,11 @@ public class AuthenticationController {
             return responses.getIllegalEmail();
         }
 
-        if (repository.findOneByUsername(schema.getUsername()).isPresent()) {
+        if (profileRepository.findOneByUsername(schema.getUsername()).isPresent()) {
             return responses.getKeyInUse("username");
         }
 
-        if (repository.findOneByEmail(schema.getEmail()).isPresent()) {
+        if (profileRepository.findOneByEmail(schema.getEmail()).isPresent()) {
             return responses.getKeyInUse("email");
         }
 
@@ -96,8 +154,21 @@ public class AuthenticationController {
         profile.setCreatedAt(Timestamp.from(Instant.now()));
         profile.setLastLogin(Timestamp.from(Instant.now()));
         profile.setLastIp(request.getRemoteAddr());
+        profile.setIpSalt(BCrypt.gensalt(4));
 
-        repository.saveAndFlush(profile);
+        profileRepository.saveAndFlush(profile);
+
+        profileRepository.findOneByEmail(profile.getEmail()).ifPresent((userProfile) -> {
+            ProfileIpId profileIpId = new ProfileIpId();
+
+            profileIpId.setProfileId(userProfile.getId());
+            profileIpId.setIpAddress(BCrypt.hashpw(userProfile.getLastIpString(), profile.getIpSalt()));
+
+            ProfileIp profileIp = new ProfileIp();
+            profileIp.setProfileIpId(profileIpId);
+
+            profileIpsRepository.saveAndFlush(profileIp);
+        });
 
         return responses.getProfileCreationCompleted(profile);
     }
