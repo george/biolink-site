@@ -6,8 +6,8 @@ import lombok.Setter;
 @Getter @Setter
 public class UpdateGroupSchema {
 
-    private int userSelection;
-    private int groupId;
+    private Integer userSelection;
+    private Integer groupId;
 
     private boolean add;
 

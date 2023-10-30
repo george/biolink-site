@@ -12,9 +12,6 @@ import java.util.List;
 @Repository
 public interface RankRepository extends JpaRepository<Rank, Integer> {
 
-    @Cacheable("ranksByRankId")
-    Rank findById(int id);
-
     List<Rank> findAll();
 
     List<Rank> findAllByIdIn(List<Integer> list);

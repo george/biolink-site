@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @AllArgsConstructor
@@ -37,25 +38,31 @@ public class AdminController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<String> handleUserGroupUpdate(UpdateGroupSchema schema) {
+    public ResponseEntity<String> handleUserGroupUpdate(@RequestBody UpdateGroupSchema schema) {
         JsonObject object = new JsonObject();
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsEntity userDetails = (UserDetailsEntity) authentication.getDetails();
+        UserDetailsEntity userDetails = (UserDetailsEntity) authentication.getPrincipal();
 
         Profile profile = userDetails.getProfile();
         List<Rank> groups = userDetails.getGroups();
+        
+        Optional<Rank> targetOptional = rankRepository.findById(schema.getGroupId());
 
-        System.out.println(groups.size());
-        groups.forEach(System.out::println);
+        if (targetOptional.isEmpty()) {
+            object.addProperty("error", true);
+            object.addProperty("error_code", "Target group not found!");
 
-        Rank targetGroup = rankRepository.findById(schema.getGroupId());
+            return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
+        }
+
+        Rank targetGroup = targetOptional.get();
 
         if (groups.stream().noneMatch(group -> group.getPriority() > targetGroup.getPriority())) {
             object.addProperty("error", true);
             object.addProperty("error_code", "target_rank_too_high");
 
-            return new ResponseEntity<>(gson.toJson(targetGroup), HttpStatusCode.valueOf(403));
+            return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(403));
         }
 
         UserGroupId userGroupId = new UserGroupId();

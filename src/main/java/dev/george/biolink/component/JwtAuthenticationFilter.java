@@ -40,14 +40,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String value = cookie.getValue();
             Integer userId = jwtService.getIdFromToken(value);
 
-            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId != null) {
                 try {
                     UserDetails details = profileDetailsService.loadUserById(userId);
 
                     if (bansRepository.findBansByUserId(userId).stream().noneMatch(Ban::isBanActive)) {
                         UsernamePasswordAuthenticationToken authenticationToken =
                                 new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
-
+                        
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     }
                 } catch (ProfileNotFoundException exc) {
