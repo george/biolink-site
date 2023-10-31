@@ -46,7 +46,7 @@ public class AdminController {
 
         Profile profile = userDetails.getProfile();
         List<Rank> groups = userDetails.getGroups();
-        
+
         Optional<Rank> targetOptional = rankRepository.findById(schema.getGroupId());
 
         if (targetOptional.isEmpty()) {
