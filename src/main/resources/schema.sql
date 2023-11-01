@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS component
     component_type     INT,
     component_meta     TEXT,
     component_text     VARCHAR(255),
-    component_priority INT,
     component_styles   VARCHAR(255)
 );
 
@@ -85,15 +84,14 @@ CREATE TABLE IF NOT EXISTS user_note
     user_id  INT  NOT NULL,
     staff_id INT  NOT NULL,
     note     TEXT NOT NULL,
-    left_at  TIMESTAMP DEFAULT NOW(),
-    primary key (user_id, left_at)
+    left_at  TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS user_note_user_id ON user_note(user_id);
 
 CREATE TABLE IF NOT EXISTS profile_redirect
 (
-    redirect_string VARCHAR(32) NOT NULL PRIMARY KEY,
+    redirect_string VARCHAR(32) NOT NULL PRIMARY KEY UNIQUE,
     user_id         INT         NOT NULL,
     FOREIGN KEY (user_id) REFERENCES profile (id) ON DELETE CASCADE
 );
@@ -103,7 +101,7 @@ CREATE INDEX IF NOT EXISTS profile_redirect_redirect_string ON profile_redirect(
 
 CREATE TABLE IF NOT EXISTS pending_redirect_transfers
 (
-    redirect_string VARCHAR(32) NOT NULL PRIMARY KEY,
+    redirect_string VARCHAR(32) NOT NULL PRIMARY KEY UNIQUE,
     transferring_to INT         NOT NULL,
     FOREIGN KEY (redirect_string) REFERENCES profile_redirect (redirect_string) ON DELETE CASCADE,
     FOREIGN KEY (transferring_to) REFERENCES profile (id) ON DELETE CASCADE
@@ -175,7 +173,7 @@ CREATE INDEX IF NOT EXISTS user_social_user_id ON user_social(user_id);
 CREATE TABLE IF NOT EXISTS ban_reason
 (
     ban_id     SERIAL PRIMARY KEY,
-    ban_reason TEXT NOT NULL
+    ban_reason TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS ban
@@ -188,7 +186,7 @@ CREATE TABLE IF NOT EXISTS ban
     ban_active    BOOLEAN   NOT NULL DEFAULT TRUE,
     FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE,
     FOREIGN KEY (issued_by) REFERENCES profile(id) ON DELETE CASCADE,
-    FOREIGN KEY (ban_type_id) REFERENCES ban_reason(ban_reason) ON DELETE CASCADE
+    FOREIGN KEY (ban_type_id) REFERENCES ban_reason(ban_id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS bans_punishment_id ON ban(punishment_id);
