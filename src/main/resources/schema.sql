@@ -198,8 +198,7 @@ CREATE TABLE IF NOT EXISTS staff_logs
     log_type_id INT NOT NULL,
     staff_id    INT NOT NULL,
     target_user INT,
-    description VARCHAR(255),
-    FOREIGN KEY (target_user) REFERENCES profile(id) ON DELETE CASCADE
+    description VARCHAR(255)
 );
 
 CREATE INDEX IF NOT EXISTS logs_staff_id ON staff_logs(staff_id);

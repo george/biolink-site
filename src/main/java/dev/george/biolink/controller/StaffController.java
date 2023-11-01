@@ -293,6 +293,8 @@ public class StaffController {
 
         object.add("data", profileData);
 
+        object.addProperty("success", true);
+
         return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(200));
     }
 
@@ -427,7 +429,9 @@ public class StaffController {
 
         logsRepository.saveAndFlush(log);
 
-        return new ResponseEntity<>(gson.toJson(users), HttpStatusCode.valueOf(200));
+        object.add("users", users);
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(200));
     }
 
     @PostMapping(
