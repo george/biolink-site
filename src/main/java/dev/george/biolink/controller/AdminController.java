@@ -1,6 +1,7 @@
 package dev.george.biolink.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dev.george.biolink.entity.UserDetailsEntity;
 import dev.george.biolink.entity.UserGroupId;
@@ -12,7 +13,13 @@ import dev.george.biolink.model.type.LogType;
 import dev.george.biolink.repository.*;
 import dev.george.biolink.schema.admin.UpdateGroupSchema;
 import dev.george.biolink.service.UserRankCheckService;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @AllArgsConstructor
@@ -33,6 +39,66 @@ public class AdminController {
     private final RankRepository rankRepository;
     private final UserGroupsRepository groupsRepository;
     private final UserRankCheckService rankCheckService;
+
+    @GetMapping(
+            value = "/admin/get-logs",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<String> getLogs(
+            @Nullable @RequestParam Integer targetId,
+            @Nullable @RequestParam Integer staffId,
+            @Nullable @RequestParam Integer logTypeId,
+            @Nullable @NotNull @RequestParam int pageNumber,
+            @NotNull @RequestParam int maxPerPage
+    ) {
+        JsonObject object = new JsonObject();
+
+        Log exampleLog = new Log();
+
+        if (targetId != null) {
+            exampleLog.setTargetUser(targetId);
+        }
+
+        if (staffId != null) {
+            exampleLog.setStaffId(staffId);
+        }
+
+        if (logTypeId != null) {
+            exampleLog.setLogTypeId(logTypeId);
+        }
+
+        JsonArray logsArray = new JsonArray();
+
+        Page<Log> page = logsRepository.findAll(Example.of(exampleLog, ExampleMatcher.matchingAny().withIgnoreNullValues()),
+                PageRequest.of(pageNumber, maxPerPage));
+
+        Map<Integer, String> usernames = new HashMap<>();
+        Set<Integer> userIds = new HashSet<>();
+
+        userIds.addAll(page.map(Log::getTargetUser).toList());
+        userIds.addAll(page.map(Log::getStaffId).toList());
+
+        profileRepository.findManyByIdIn(new ArrayList<>(userIds)).forEach(profile -> {
+            usernames.put(profile.getId(), profile.getUsername());
+        });
+
+        page.forEach(log -> {
+            JsonObject logObject = new JsonObject();
+
+            logObject.addProperty("id", log.getLogId());
+            logObject.addProperty("logTypeId", log.getLogTypeId());
+            logObject.addProperty("target", usernames.getOrDefault(log.getTargetUser(), "None"));
+            logObject.addProperty("staff", usernames.getOrDefault(log.getStaffId(), "None"));
+            logObject.addProperty("description", log.getDescription());
+
+            logsArray.add(logObject);
+        });
+
+        object.addProperty("success", true);
+        object.add("logs", logsArray);
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(200));
+    }
 
     @PutMapping(
             value = "/admin/disable-mfa",

@@ -425,7 +425,8 @@ public class StaffController {
 
         log.setLogTypeId(LogType.GENERAL_USER_SEARCH.getType());
         log.setStaffId(userDetails.getProfile().getId());
-        log.setDescription(String.format("Searched with query %d %s %s %s", userId, username, email, lastIp));
+        log.setDescription(String.format("Searched with query (User ID - %d) (Username - %s) (Email - %s) " +
+                "(Last IP - %s)", userId, username, email, lastIp));
 
         logsRepository.saveAndFlush(log);
 

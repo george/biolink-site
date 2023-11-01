@@ -18,4 +18,6 @@ public interface ProfileRepository extends JpaRepository<Profile, Integer> {
 
     List<Profile> findAllByLastIp(int lastIp);
 
+    List<Profile> findManyByIdIn(List<Integer> userIds);
+
 }
