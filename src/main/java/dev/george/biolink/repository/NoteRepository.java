@@ -1,18 +1,16 @@
 package dev.george.biolink.repository;
 
-import dev.george.biolink.model.Rank;
+import dev.george.biolink.model.Note;
 import jakarta.persistence.Table;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Table(name = "rank", schema = "public")
+@Table(name = "user_note", schema = "public")
 @Repository
-public interface RankRepository extends JpaRepository<Rank, Integer> {
+public interface NoteRepository extends JpaRepository<Note, Integer> {
 
-    List<Rank> findAll();
-
-    List<Rank> findAllByIdIn(List<Integer> list);
+    <S extends Note> List<S> findAlByUserId(int userId);
 
 }

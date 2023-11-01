@@ -28,19 +28,29 @@ CREATE INDEX IF NOT EXISTS profile_ips_composite ON profile_ip(profile_id, ip_ad
 CREATE INDEX IF NOT EXISTS profile_username ON profile(username);
 CREATE INDEX IF NOT EXISTS profile_email ON profile(email);
 
-CREATE TABLE IF NOT EXISTS profile_component
+CREATE TABLE IF NOT EXISTS component
 (
-    user_id               INT,
-    component_type        INT,
-    component_priority    INT,
-    component_title       VARCHAR(25),
-    component_description VARCHAR(255),
-    component_styles      VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, component_type, component_title)
+    component_id       SERIAL PRIMARY KEY,
+    component_type     INT,
+    component_meta     TEXT,
+    component_text     VARCHAR(255),
+    component_priority INT,
+    component_styles   VARCHAR(255)
 );
 
-CREATE INDEX IF NOT EXISTS profile_component_user_id ON profile_component(user_id);
+CREATE INDEX IF NOT EXISTS component_id ON component(component_id);
+
+CREATE TABLE IF NOT EXISTS profile_components
+(
+    user_id         INT,
+    component_id    INT,
+    component_index INT,
+    PRIMARY KEY (user_id, component_index),
+    FOREIGN KEY (user_id) REFERENCES profile(id),
+    FOREIGN KEY (component_id) REFERENCES component(component_id)
+);
+
+CREATE INDEX IF NOT EXISTS profile_components_id ON profile_components(user_id);
 
 CREATE TABLE IF NOT EXISTS rank
 (
@@ -48,6 +58,7 @@ CREATE TABLE IF NOT EXISTS rank
     name                 VARCHAR(50) UNIQUE,
     style                VARCHAR(255),
     priority             INT UNIQUE,
+    max_redirects        INT DEFAULT 3,
     purchasable          BOOLEAN,
     can_manage_lower     BOOLEAN,
     staff                BOOLEAN,
@@ -68,15 +79,37 @@ CREATE TABLE IF NOT EXISTS user_group
 
 CREATE INDEX IF NOT EXISTS user_group_from_id ON user_group(user_id);
 
+CREATE TABLE IF NOT EXISTS user_note
+(
+    note_id  SERIAL PRIMARY KEY,
+    user_id  INT  NOT NULL,
+    staff_id INT  NOT NULL,
+    note     TEXT NOT NULL,
+    left_at  TIMESTAMP DEFAULT NOW(),
+    primary key (user_id, left_at)
+);
+
+CREATE INDEX IF NOT EXISTS user_note_user_id ON user_note(user_id);
+
 CREATE TABLE IF NOT EXISTS profile_redirect
 (
-    user_id         INT,
-    redirect_string VARCHAR(32),
-    FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, redirect_string)
+    redirect_string VARCHAR(32) NOT NULL PRIMARY KEY,
+    user_id         INT         NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES profile (id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS profile_redirect_user_id ON profile_redirect(user_id);
+CREATE INDEX IF NOT EXISTS profile_redirect_redirect_string ON profile_redirect(redirect_string);
+
+CREATE TABLE IF NOT EXISTS pending_redirect_transfers
+(
+    redirect_string VARCHAR(32) NOT NULL PRIMARY KEY,
+    transferring_to INT         NOT NULL,
+    FOREIGN KEY (redirect_string) REFERENCES profile_redirect (redirect_string) ON DELETE CASCADE,
+    FOREIGN KEY (transferring_to) REFERENCES profile (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS profile_redirect_transfer_redirect_string ON pending_redirect_transfers(redirect_string);
 
 CREATE TABLE IF NOT EXISTS domain
 (
@@ -110,7 +143,7 @@ CREATE TABLE IF NOT EXISTS context
 (
     context_id   VARCHAR(255) PRIMARY KEY,
     user_id      INT       NOT NULL,
-    context_meta VARCHAR(255),
+    context_meta TEXT,
     created_at   TIMESTAMP NOT NULL DEFAULT Now(),
     FOREIGN KEY (user_id) REFERENCES profile (id)
 );
@@ -142,7 +175,7 @@ CREATE INDEX IF NOT EXISTS user_social_user_id ON user_social(user_id);
 CREATE TABLE IF NOT EXISTS ban_reason
 (
     ban_id     SERIAL PRIMARY KEY,
-    ban_reason VARCHAR(255) NOT NULL
+    ban_reason TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ban
@@ -154,7 +187,8 @@ CREATE TABLE IF NOT EXISTS ban
     issued_by     INT       NOT NULL,
     ban_active    BOOLEAN   NOT NULL DEFAULT TRUE,
     FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE,
-    FOREIGN KEY (issued_by) REFERENCES profile(id) ON DELETE CASCADE
+    FOREIGN KEY (issued_by) REFERENCES profile(id) ON DELETE CASCADE,
+    FOREIGN KEY (ban_type_id) REFERENCES ban_reason(ban_reason) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS bans_punishment_id ON ban(punishment_id);

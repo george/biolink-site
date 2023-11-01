@@ -23,6 +23,8 @@ public class Rank {
     private String style;
 
     private Integer priority;
+    private Integer maxRedirects;
+
     private Boolean purchasable;
 
     private Boolean canManageLower;

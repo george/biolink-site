@@ -11,6 +11,7 @@ import dev.george.biolink.model.UserGroup;
 import dev.george.biolink.model.type.LogType;
 import dev.george.biolink.repository.*;
 import dev.george.biolink.schema.admin.UpdateGroupSchema;
+import dev.george.biolink.service.UserRankCheckService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -26,15 +27,67 @@ import java.util.Optional;
 @AllArgsConstructor
 public class AdminController {
 
-    private final LogsRepository logsRepository;
-    private final RankRepository rankRepository;
-    private final ProfileRepository profileRepository;
-    private final UserGroupsRepository groupsRepository;
-
     private final Gson gson;
+    private final LogsRepository logsRepository;
+    private final ProfileRepository profileRepository;
+    private final RankRepository rankRepository;
+    private final UserGroupsRepository groupsRepository;
+    private final UserRankCheckService rankCheckService;
 
     @PutMapping(
-            value = "/admin/add-rank",
+            value = "/admin/disable-mfa",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<String> disableMfa(
+            @RequestParam int userId
+    ) {
+        JsonObject object = new JsonObject();
+
+        UserDetailsEntity userDetails = (UserDetailsEntity) SecurityContextHolder.getContext().getAuthentication();
+        Optional<Profile> targetProfileOptional = profileRepository.findById(userId);
+
+        if (targetProfileOptional.isEmpty()) {
+            object.addProperty("error", true);
+            object.addProperty("error_code", "no_user_found");
+
+            return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
+        } else if (!targetProfileOptional.get().getMfaEnabled()) {
+            object.addProperty("error", true);
+            object.addProperty("error_code", "mfa_not_enabled");
+
+            return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
+        }
+
+        Profile targetProfile = targetProfileOptional.get();
+
+        if (!rankCheckService.isUserGroupHigher(userDetails.getProfile(), targetProfile)) {
+            object.addProperty("error", true);
+            object.addProperty("error_code", "target_group_too_high");
+
+            return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(403));
+        }
+
+        Log log = new Log();
+
+        log.setLogTypeId(LogType.DISABLE_MFA.getType());
+        log.setStaffId(userDetails.getProfile().getId());
+        log.setTargetUser(targetProfile.getId());
+        log.setDescription("Disabled MFA");
+
+        targetProfile.setMfaEnabled(false);
+        targetProfile.setMfaSecret(null);
+
+        logsRepository.saveAndFlush(log);
+        profileRepository.saveAndFlush(targetProfile);
+
+        object.addProperty("success", true);
+
+        return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(200));
+    }
+
+    @PutMapping(
+            value = "/admin/update-user-group",
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
@@ -51,7 +104,7 @@ public class AdminController {
 
         if (targetOptional.isEmpty()) {
             object.addProperty("error", true);
-            object.addProperty("error_code", "Target group not found!");
+            object.addProperty("error_code", "target_group_not_found");
 
             return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
         }
@@ -60,7 +113,7 @@ public class AdminController {
 
         if (groups.stream().noneMatch(group -> group.getPriority() > targetGroup.getPriority())) {
             object.addProperty("error", true);
-            object.addProperty("error_code", "target_rank_too_high");
+            object.addProperty("error_code", "target_group_too_high");
 
             return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(403));
         }

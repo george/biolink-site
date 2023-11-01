@@ -42,11 +42,15 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> claims, String subject) {
+        return generateToken(claims, subject, 86400L * 1000L * 30L);
+    }
+
+    public String generateToken(Map<String, Object> claims, String subject, long tokenDuration) {
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)
                 .issuedAt(Date.from(Instant.now()))
-                .expiration(new Date(System.currentTimeMillis() + 86400L * 1000L * 30L))
+                .expiration(new Date(System.currentTimeMillis() + tokenDuration))
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }

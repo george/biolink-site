@@ -11,7 +11,7 @@ public class LoginSchema {
     private String password;
     private String captchaResponseKey;
 
-    private String contextId;
+    private String contextToken;
     private String verificationCode;
 
     @Nullable private String authenticationPurpose;
