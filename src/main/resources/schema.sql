@@ -237,6 +237,7 @@ CREATE TABLE IF NOT EXISTS payment
     payment_type   INT,
     payment_amount DECIMAL(8, 2),
     discount_used  INT,
+    data TEXT,
     FOREIGN KEY (payment_type) REFERENCES payment_package (id)
 );
 
