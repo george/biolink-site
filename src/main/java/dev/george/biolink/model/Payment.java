@@ -20,6 +20,8 @@ public class Payment {
     private double paymentAmount;
 
     private String data;
+    private String transactionId;
+    
     private int discountUsed;
 
 }

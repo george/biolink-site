@@ -238,6 +238,7 @@ CREATE TABLE IF NOT EXISTS payment
     payment_amount DECIMAL(8, 2),
     discount_used  INT,
     data TEXT,
+    transaction_id VARCHAR(100),
     FOREIGN KEY (payment_type) REFERENCES payment_package (id)
 );
 
