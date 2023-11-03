@@ -63,8 +63,7 @@ CREATE TABLE IF NOT EXISTS rank
     staff                BOOLEAN,
     can_ban              BOOLEAN,
     can_manage_users     BOOLEAN,
-    can_give_ranks       BOOLEAN,
-    can_give_staff_ranks BOOLEAN
+    can_give_ranks       BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS user_group

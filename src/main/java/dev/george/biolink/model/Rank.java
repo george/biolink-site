@@ -33,7 +33,6 @@ public class Rank {
     private Boolean canBan;
     private Boolean canManageUsers;
     private Boolean canGiveRanks;
-    private Boolean canGiveStaffRanks;
 
     public List<GrantedAuthority> getGrantedAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
