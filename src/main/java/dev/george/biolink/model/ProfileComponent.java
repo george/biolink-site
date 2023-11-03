@@ -13,6 +13,5 @@ public class ProfileComponent {
     @EmbeddedId private ProfileComponentUserIdComponentIndex key;
 
     private int componentId;
-    private int componentIndex;
 
 }

@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS invite
 (
     user_id     INT,
     invite_code VARCHAR(16) PRIMARY KEY,
-    FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS invite_user_id ON invite(user_id);
