@@ -36,6 +36,8 @@ public class StaffController {
     private final JwtService jwtService;
     private final LogsRepository logsRepository;
     private final NoteRepository noteRepository;
+    private final PaymentRepository paymentRepository;
+    private final PaymentPackageRepository paymentPackageRepository;
     private final PendingRedirectTransferRepository redirectTransferRepository;
     private final ProfileRepository profileRepository;
     private final RankRepository rankRepository;
@@ -254,11 +256,12 @@ public class StaffController {
         });
 
         JsonArray userNotesArray = new JsonArray();
-        List<Note> userNotes = noteRepository.findAlByUserId(userId);
 
+        List<Note> userNotes = noteRepository.findAlByUserId(userId);
         List<Profile> staffProfiles = profileRepository.findAllById(
                 userNotes.stream().map(Note::getStaffId).collect(Collectors.toSet())
         );
+        List<Payment> payments = paymentRepository.findPaymentsByUserId(targetProfile.getId());
 
         userNotes.forEach(note -> {
             JsonObject noteObject = new JsonObject();
@@ -280,6 +283,34 @@ public class StaffController {
         redirectRepository.findByUserId(targetProfile.getId()).forEach(redirect ->
                 userRedirects.add(redirect.getRedirectString()));
 
+        List<PaymentPackage> paymentPackages = paymentPackageRepository.getAllByIdIn(payments.stream()
+                .map(Payment::getPaymentType)
+                .toList());
+
+        JsonArray userPayments = new JsonArray();
+
+        payments.forEach(payment -> {
+            JsonObject paymentObject = new JsonObject();
+
+            PaymentPackage paymentPackage = paymentPackages.stream()
+                    .filter(paymentPackageData -> paymentPackageData.getId() == payment.getPaymentType())
+                    .findFirst()
+                    .orElse(null);
+
+            if (paymentPackage == null) {
+                paymentObject.addProperty("paymentType", "Unknown");
+            } else {
+                paymentObject.addProperty("paymentType", paymentPackage.getName());
+            }
+
+            paymentObject.addProperty("id", payment.getPaymentId());
+            paymentObject.addProperty("amount", payment.getPaymentAmount());
+            paymentObject.addProperty("data", payment.getData());
+            paymentObject.addProperty("discountId", payment.getDiscountUsed());
+
+            userPayments.add(paymentObject);
+        });
+
         profileData.addProperty("id", targetProfile.getId());
         profileData.addProperty("email", targetProfile.getEmail());
         profileData.addProperty("username", targetProfile.getUsername());
@@ -290,6 +321,7 @@ public class StaffController {
         profileData.add("groups", userGroups);
         profileData.add("notes", userNotesArray);
         profileData.add("redirects", userRedirects);
+        profileData.add("payments", userPayments);
 
         object.add("data", profileData);
 

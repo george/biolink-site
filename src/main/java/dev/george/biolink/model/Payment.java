@@ -19,6 +19,7 @@ public class Payment {
 
     private double paymentAmount;
 
+    private String data;
     private int discountUsed;
 
 }

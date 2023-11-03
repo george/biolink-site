@@ -1,6 +1,5 @@
 package dev.george.biolink.repository;
 
-import dev.george.biolink.model.Ban;
 import dev.george.biolink.model.Payment;
 import jakarta.persistence.Table;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,5 +10,7 @@ import java.util.List;
 @Table(name = "payment", schema = "public")
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
+
+    List<Payment> findPaymentsByUserId(int userId);
 
 }
