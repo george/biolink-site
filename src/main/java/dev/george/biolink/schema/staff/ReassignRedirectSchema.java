@@ -1,8 +1,9 @@
 package dev.george.biolink.schema.staff;
 
 import lombok.Getter;
+import lombok.Setter;
 
-@Getter
+@Getter @Setter
 public class ReassignRedirectSchema {
 
     private String redirect;

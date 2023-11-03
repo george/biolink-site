@@ -1,0 +1,17 @@
+package dev.george.biolink.entity;
+
+import jakarta.persistence.Embeddable;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+
+@Embeddable
+@Getter @Setter
+public class UserSocialUserPlatformUsername implements Serializable {
+
+    private int userId;
+    private int platformId;
+    private String username;
+
+}

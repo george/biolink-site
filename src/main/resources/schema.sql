@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS component
 
 CREATE INDEX IF NOT EXISTS component_id ON component(component_id);
 
-CREATE TABLE IF NOT EXISTS profile_components
+CREATE TABLE IF NOT EXISTS profile_component
 (
     user_id         INT,
     component_id    INT,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS profile_components
     FOREIGN KEY (component_id) REFERENCES component(component_id)
 );
 
-CREATE INDEX IF NOT EXISTS profile_components_id ON profile_components(user_id);
+CREATE INDEX IF NOT EXISTS profile_components_id ON profile_component(user_id);
 
 CREATE TABLE IF NOT EXISTS rank
 (
@@ -116,25 +116,26 @@ CREATE TABLE IF NOT EXISTS domain
     PRIMARY KEY (user_id, domain)
 );
 
+CREATE INDEX IF NOT EXISTS domain_user_id ON domain(user_id);
 CREATE INDEX IF NOT EXISTS domain_name ON domain(domain);
 
 CREATE TABLE IF NOT EXISTS invite
 (
     user_id     INT,
-    invite_code VARCHAR(16),
+    invite_code VARCHAR(16) PRIMARY KEY,
     FOREIGN KEY (user_id) REFERENCES profile(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, invite_code)
 );
 
+CREATE INDEX IF NOT EXISTS invite_user_id ON invite(user_id);
 CREATE INDEX IF NOT EXISTS invite_code ON invite(invite_code);
 
 CREATE TABLE IF NOT EXISTS platform
 (
-    platform_id           SERIAL,
-    platform_key          VARCHAR(50) UNIQUE,
-    platform_display_name VARCHAR(50) UNIQUE,
-    PRIMARY KEY (platform_id)
+    platform_id           SERIAL PRIMARY KEY,
+    platform_display_name VARCHAR(50) UNIQUE
 );
+
+CREATE INDEX platform_platform_id ON platform(platform_id);
 
 CREATE TABLE IF NOT EXISTS context
 (
@@ -149,13 +150,13 @@ CREATE INDEX IF NOT EXISTS context_context_id ON context(context_id);
 
 CREATE TABLE IF NOT EXISTS verification_code
 (
-    user_id           INT          NOT NULL,
-    verification_code INT          NOT NULL,
+    user_id           INT          NOT NULL PRIMARY KEY,
+    verification_code INT          NOT NULL UNIQUE,
     context_id        VARCHAR(255) NOT NULL,
-    PRIMARY KEY (user_id, verification_code),
     FOREIGN KEY (context_id) REFERENCES context (context_id) ON DELETE CASCADE
 );
 
+CREATE INDEX IF NOT EXISTS verification_code_user_id ON verification_code(user_id);
 CREATE INDEX IF NOT EXISTS verification_codes_code ON verification_code(verification_code);
 
 CREATE TABLE IF NOT EXISTS user_social
@@ -203,6 +204,44 @@ CREATE TABLE IF NOT EXISTS staff_logs
 CREATE INDEX IF NOT EXISTS logs_staff_id ON staff_logs(staff_id);
 CREATE INDEX IF NOT EXISTS logs_user_id ON staff_logs(target_user);
 CREATE INDEX IF NOT EXISTS logs_type_id ON staff_logs(log_type_id);
+
+CREATE TABLE IF NOT EXISTS payment_package
+(
+    id             SERIAL PRIMARY KEY,
+    name           VARCHAR(100) NOT NULL,
+    rank_id        INT,
+    price          DECIMAL(8,2),
+    available_from TIMESTAMP DEFAULT NOW(),
+    available_to   TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS payment_package_id ON payment_package(id);
+
+CREATE TABLE IF NOT EXISTS discount
+(
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(100) NOT NULL,
+    discount_amount DECIMAL(5, 2),
+    promotion_code  VARCHAR(30),
+    available_from  TIMESTAMP DEFAULT NOW(),
+    available_to    TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS discount_id ON discount(id);
+CREATE INDEX IF NOT EXISTS discount_name ON discount(name);
+
+CREATE TABLE IF NOT EXISTS payment
+(
+    payment_id     SERIAL PRIMARY KEY,
+    user_id        INT,
+    payment_type   INT,
+    payment_amount DECIMAL(8, 2),
+    discount_used  INT,
+    FOREIGN KEY (payment_type) REFERENCES payment_package (id)
+);
+
+CREATE INDEX IF NOT EXISTS payment_payment_id ON payment(payment_id);
+CREATE INDEX IF NOT EXISTS payment_user_id ON payment(user_id);
 
 CREATE OR REPLACE FUNCTION expire_handler() RETURNS trigger
     LANGUAGE plpgsql
