@@ -1,0 +1,27 @@
+version: '3.9'
+
+x-common-variables: &common-variables
+  POSTGRES_PASSWORD: 12345678
+  POSTGRES_USER: postgres
+  POSTGRES_DB: postgres
+  POSTGRES_IP: postgres_db
+  POSTGRES_PORT: 5432
+  JWT_SECRET: u87ta87sdhA(*SDy(A&SdbAS98dHAS97dga827GA(&WG(AWBD(A@(&ASBDIYASVIY
+
+services:
+  web:
+    build: ./
+    ports:
+      - "8080:8080"
+    environment:
+      <<: *common-variables
+    depends_on:
+      - postgres
+    links:
+      - postgres:postgres_db
+  postgres:
+    image: postgres:latest
+    volumes:
+      - ~/apps/postgres:/var/lib/postgresql/data
+    environment:
+      <<: *common-variables

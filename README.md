@@ -1,5 +1,7 @@
 <h1 align="center"> Biolink Site API </h1>
 
+![JAR Build Status](https://github.com/george/biolink-site/actions/workflows/build-and-upload-jar.yml/badge.svg)
+
 Powerful and scalable biolink REST API for biolink sites in Spring.
 
 **Requirements**
@@ -17,3 +19,7 @@ Powerful and scalable biolink REST API for biolink sites in Spring.
 - Highly scalable and maintainable, with a focus on expandability
 - Containerized with Docker, including JAR building in image building
 - Easy to add onto, with a clearly defined project structure
+
+**Licensing**
+
+This project is licensed under the MIT license.
