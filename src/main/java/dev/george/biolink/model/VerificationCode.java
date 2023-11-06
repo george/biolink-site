@@ -13,6 +13,7 @@ import lombok.Setter;
 public class VerificationCode {
 
     @Id private int userId;
+
     private int verificationCode;
     private String contextId;
 

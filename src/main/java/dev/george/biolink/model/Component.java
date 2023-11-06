@@ -7,8 +7,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "component", schema = "public")
-@Getter
-@Setter
+@Getter @Setter
 public class Component {
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,8 +15,15 @@ public class Component {
     private int componentId;
 
     private int componentType;
+
+    private String componentTag;
     private String componentMeta;
     private String componentText;
     private String componentStyles;
+    private String componentName;
+
+    private boolean componentPublic;
+    private boolean componentHasChildren;
+    private boolean componentEndChildren;
 
 }

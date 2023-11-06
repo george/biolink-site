@@ -30,23 +30,28 @@ CREATE INDEX IF NOT EXISTS profile_email ON profile(email);
 
 CREATE TABLE IF NOT EXISTS component
 (
-    component_id       SERIAL PRIMARY KEY,
-    component_type     INT,
-    component_meta     TEXT,
-    component_text     VARCHAR(255),
-    component_styles   VARCHAR(255)
+    component_id           SERIAL PRIMARY KEY,
+    component_type         INT,
+    component_tag          VARCHAR(20),
+    component_meta         TEXT,
+    component_text         VARCHAR(255),
+    component_styles       VARCHAR(255),
+    component_name         VARCHAR(120),
+    component_public       BOOLEAN,
+    component_has_children BOOLEAN DEFAULT FALSE,
+    component_end_children BOOLEAN DEFAULT FALSE
 );
 
 CREATE INDEX IF NOT EXISTS component_id ON component(component_id);
 
 CREATE TABLE IF NOT EXISTS profile_component
 (
-    user_id         INT,
-    component_id    INT,
-    component_index INT,
+    user_id          INT,
+    component_id     INT,
+    component_index  INT,
     PRIMARY KEY (user_id, component_index),
-    FOREIGN KEY (user_id) REFERENCES profile(id),
-    FOREIGN KEY (component_id) REFERENCES component(component_id)
+    FOREIGN KEY (user_id) REFERENCES profile (id),
+    FOREIGN KEY (component_id) REFERENCES component (component_id)
 );
 
 CREATE INDEX IF NOT EXISTS profile_components_id ON profile_component(user_id);
