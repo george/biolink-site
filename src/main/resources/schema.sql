@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS platform
     platform_display_name VARCHAR(50) UNIQUE
 );
 
-CREATE INDEX platform_platform_id ON platform(platform_id);
+CREATE INDEX IF NOT EXISTS platform_platform_id ON platform(platform_id);
 
 CREATE TABLE IF NOT EXISTS context
 (
@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS payment_package
 (
     id             SERIAL PRIMARY KEY,
     name           VARCHAR(100) NOT NULL,
+    description    TEXT NOT NULL,
     rank_id        INT,
     price          DECIMAL(8,2),
     available_from TIMESTAMP DEFAULT NOW(),
@@ -227,9 +228,9 @@ CREATE TABLE IF NOT EXISTS discount
     id              SERIAL PRIMARY KEY,
     name            VARCHAR(100) NOT NULL,
     discount_amount DECIMAL(5, 2),
-    promotion_code  VARCHAR(30),
-    available_from  TIMESTAMP DEFAULT NOW(),
-    available_to    TIMESTAMP
+    promotion_code  VARCHAR(30) NOT NULL UNIQUE,
+    available_from  TIMESTAMP NOT NULL DEFAULT NOW(),
+    available_to    TIMESTAMP NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS discount_id ON discount(id);

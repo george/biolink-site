@@ -55,7 +55,7 @@ public class ViewProfileController {
                 Example.of(profileComponent, ExampleMatcher.matchingAny().withIgnoreNullValues()));
 
         List<Component> components = componentRepository.findComponentsByComponentIdIn(profileComponents.stream()
-                .sorted(Comparator.comparingInt(ProfileComponent::getComponentIndex))
+                .sorted(Comparator.comparingInt((component) -> component.getKey().getComponentIndex()))
                 .map(ProfileComponent::getComponentId)
                 .toList());
 

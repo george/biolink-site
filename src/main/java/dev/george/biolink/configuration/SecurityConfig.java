@@ -49,6 +49,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> {
                     authorize.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll();
                     authorize.requestMatchers("/auth/**").permitAll();
+                    authorize.requestMatchers("/webhook/**").permitAll();
+
                     authorize.requestMatchers("/users").permitAll();
 
                     authorize.requestMatchers("/staff/**").hasAuthority("staff");
