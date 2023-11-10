@@ -25,11 +25,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.Timestamp;
 import java.util.Optional;
 
 @RestController
-public class PaymentController {
+public class StripePaymentController {
 
     private final DiscountRepository discountRepository;
     private final Gson gson;
@@ -40,8 +39,8 @@ public class PaymentController {
     @Value("${stripe.endpoint.secret}")
     private String endpointSecret;
 
-    public PaymentController(DiscountRepository discountRepository, Gson gson, PaymentPackageRepository paymentPackageRepository,
-                             PaymentService paymentService, StripeService stripeService) {
+    public StripePaymentController(DiscountRepository discountRepository, Gson gson, PaymentPackageRepository paymentPackageRepository,
+                                   PaymentService paymentService, StripeService stripeService) {
         this.discountRepository = discountRepository;
         this.gson = gson;
         this.paymentPackageRepository = paymentPackageRepository;
@@ -58,31 +57,17 @@ public class PaymentController {
             @RequestBody ChargeSchema schema
     ) {
         JsonObject object = new JsonObject();
+        ResponseEntity<String> error = paymentService.handleChargeRequest(schema);
 
-        Optional<PaymentPackage> paymentPackageOptional = paymentPackageRepository.findById(schema.getPackageId());
-        Optional<Discount> discountOptional = discountRepository.findDiscountByPromotionCode(schema.getDiscountCode());
-
-        if (paymentPackageOptional.isEmpty()) {
-            object.addProperty("error", true);
-            object.addProperty("error_code", "invalid_payment_package");
-
-            return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
-        }
-
-        if (discountOptional.isPresent()) {
-            Discount discount = discountOptional.get();
-            Timestamp time = new Timestamp(System.currentTimeMillis());
-
-            if (discount.getAvailableFrom().before(time) && discount.getAvailableTo().after(time)) {
-                object.addProperty("error", true);
-                object.addProperty("error_code", "discount_invalid_or_expired");
-
-                return new ResponseEntity<>(gson.toJson(object), HttpStatusCode.valueOf(400));
-            }
+        if (error != null) {
+            return error;
         }
 
         UserDetailsEntity entity = (UserDetailsEntity) SecurityContextHolder.getContext()
                 .getAuthentication().getDetails();
+
+        Optional<PaymentPackage> paymentPackageOptional = paymentPackageRepository.findById(schema.getPackageId());
+        Optional<Discount> discountOptional = discountRepository.findDiscountByPromotionCode(schema.getDiscountCode());
 
         try {
             Charge charge = stripeService.createCharge(
