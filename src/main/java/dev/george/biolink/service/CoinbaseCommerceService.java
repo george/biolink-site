@@ -8,6 +8,7 @@ import dev.george.biolink.model.Discount;
 import dev.george.biolink.model.PaymentPackage;
 import dev.george.biolink.model.Profile;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,8 +37,8 @@ public class CoinbaseCommerceService {
     private static final String SIGNING_ALGORITHM = "HmacSHA256";
     private static final Charset UTF8 = StandardCharsets.UTF_8;
 
-    private final Mac sha256Hmac;
-    private final BaseEncoding signatureEncoding;
+    private Mac sha256Hmac;
+    private BaseEncoding signatureEncoding;
 
     private final Gson gson;
 
@@ -47,9 +48,12 @@ public class CoinbaseCommerceService {
     @Value("${coinbase.commerce.webhook.secret}")
     private String coinbaseCommerceWebhookSecret;
 
-    public CoinbaseCommerceService(Gson gson) throws NoSuchAlgorithmException, InvalidKeyException {
+    public CoinbaseCommerceService(Gson gson) {
         this.gson = gson;
+    }
 
+    @PostConstruct
+    public void postInit() throws NoSuchAlgorithmException, InvalidKeyException {
         SecretKeySpec secretKey = new SecretKeySpec(coinbaseCommerceWebhookSecret.getBytes(UTF8), SIGNING_ALGORITHM);
 
         this.sha256Hmac = Mac.getInstance(SIGNING_ALGORITHM);
