@@ -14,16 +14,15 @@ public class Component {
     @Id @NotNull
     private int componentId;
 
+    private int componentCreator;
     private int componentType;
+
+    private Integer componentParent;
 
     private String componentTag;
     private String componentMeta;
     private String componentText;
     private String componentStyles;
     private String componentName;
-
-    private boolean componentPublic;
-    private boolean componentHasChildren;
-    private boolean componentEndChildren;
 
 }

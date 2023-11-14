@@ -15,7 +15,8 @@ public enum LogType {
     GENERAL_USER_SEARCH("general_user_search", 4),
     ASSIGN_PROFILE_REDIRECT("assign_profile_redirect", 5),
     DISABLE_MFA("disable_mfa", 6),
-    USER_CHANGE_EMAIL("user_change_email", 7);
+    USER_CHANGE_EMAIL("user_change_email", 7),
+    USER_INVALID_INPUT("user_invalid_input", 8);
 
     private final String status;
     private final int type;

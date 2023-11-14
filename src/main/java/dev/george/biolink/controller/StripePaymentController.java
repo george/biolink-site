@@ -64,7 +64,7 @@ public class StripePaymentController {
         }
 
         UserDetailsEntity entity = (UserDetailsEntity) SecurityContextHolder.getContext()
-                .getAuthentication().getDetails();
+                .getAuthentication().getPrincipal();
 
         Optional<PaymentPackage> paymentPackageOptional = paymentPackageRepository.findById(schema.getPackageId());
         Optional<Discount> discountOptional = discountRepository.findDiscountByPromotionCode(schema.getDiscountCode());

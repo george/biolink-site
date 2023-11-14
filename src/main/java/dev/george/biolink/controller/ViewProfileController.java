@@ -17,10 +17,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @RestController
@@ -60,9 +59,13 @@ public class ViewProfileController {
                 .toList());
 
         Stack<Component> openTags = new Stack<>();
+        Set<Integer> parentIds = components.stream()
+                .map(Component::getComponentParent)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
 
         htmlResponse.append("<main>");
-
+        
         components.forEach(component -> {
             StringBuilder componentDataBuilder = new StringBuilder();
 
@@ -76,13 +79,15 @@ public class ViewProfileController {
                 componentDataBuilder.append(" class=\"").append(component.getComponentStyles()).append("\"");
             }
 
-            componentDataBuilder.append(component.isComponentHasChildren() ? "/" : "").append(">");
+            boolean isParent = parentIds.contains(component.getComponentId());
 
-            if (component.isComponentHasChildren()) {
+            componentDataBuilder.append(isParent ? "/" : "").append(">");
+
+            if (isParent) {
                 openTags.push(component);
             }
 
-            if (component.isComponentEndChildren()) {
+            if (!openTags.empty() && component.getComponentParent() == null) {
                 Component endingComponent = openTags.pop();
 
                 componentDataBuilder.append("</").append(endingComponent.getComponentTag()).append(">");
